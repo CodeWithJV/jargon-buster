@@ -4,9 +4,10 @@ import { useTerms } from '../context/TermContext';
 
 interface TermListProps {
   searchQuery: string;
+  filterType: 'all' | 'understood' | 'not-understood';
 }
 
-export function TermList({ searchQuery }: TermListProps) {
+export function TermList({ searchQuery, filterType }: TermListProps) {
   const { terms, toggleUnderstood, deleteTerm, updateTerm } = useTerms();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTerm, setEditTerm] = useState('');
@@ -43,12 +44,18 @@ export function TermList({ searchQuery }: TermListProps) {
     }
   };
 
-  const filteredTerms = searchQuery
+  let filteredTerms = searchQuery
     ? terms.filter(t => 
         t.term.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.definition.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : terms;
+
+  if (filterType === 'understood') {
+    filteredTerms = filteredTerms.filter(term => term.understood);
+  } else if (filterType === 'not-understood') {
+    filteredTerms = filteredTerms.filter(term => !term.understood);
+  }
 
   return (
     <div className="space-y-4">

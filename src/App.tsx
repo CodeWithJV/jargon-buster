@@ -8,6 +8,8 @@ import { SearchTerms } from './components/SearchTerms';
 function App() {
   const [activeTab, setActiveTab] = useState<'add' | 'search'>('add');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'favourites'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'understood' | 'not-understood'>('all');
 
   return (
     <TermProvider>
@@ -56,7 +58,27 @@ function App() {
               )}
             </div>
           </div>
-          <TermList searchQuery={searchQuery} />
+          <div className="mt-4 flex justify-around">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${filterType === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              All Terms
+            </button>
+            <button
+              onClick={() => setFilterType('understood')}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${filterType === 'understood' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              Understood
+            </button>
+            <button
+              onClick={() => setFilterType('not-understood')}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${filterType === 'not-understood' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              Not Understood
+            </button>
+          </div>
+          <TermList searchQuery={searchQuery} filterType={filterType} />
         </main>
       </div>
     </TermProvider>
