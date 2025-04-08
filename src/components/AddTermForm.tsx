@@ -16,7 +16,7 @@ export function AddTermForm() {
       setInitialThoughts('');
       inputRef.current?.focus();
     }
-  ; // Removed closing parenthesis here
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
