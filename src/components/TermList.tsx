@@ -113,7 +113,8 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                   <>
                     <div className="flex items-center gap-3">
                       {/* Intentionally causing a TypeError below */}
-                      <h3 className="text-lg font-semibold text-gray-900">{term.nonExistentProperty.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{term.term}</h3>
+
                       <div className="flex gap-2">
                         <a
                           href={googleUrl}
