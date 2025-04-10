@@ -48,10 +48,11 @@ export function TermList({ searchQuery, filter }: TermListProps) {
   // Filter terms based on both status filter and search query
   const filteredTerms = terms.filter(term => {
     const matchesFilter = filter === 'understood' ? term.understood : !term.understood;
-    // Logical Error: Search is case-sensitive instead of case-insensitive
-    const matchesSearch = searchQuery.trim() === '' || term.term.includes(searchQuery.trim());
+    const lowerQuery = searchQuery.trim().toLowerCase();
+    const matchesSearch = lowerQuery === '' || term.term.toLowerCase().includes(lowerQuery);
     return matchesFilter && matchesSearch;
   });
+
 
   return (
     <div className="space-y-4">
