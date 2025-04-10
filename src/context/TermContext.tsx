@@ -40,7 +40,10 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (response.ok) {
+        // Logical Error: Commented out state update, UI won't refresh immediately
+        // setTerms(prev => [...prev, newTerm]);
         setTerms(prev => [...prev, newTerm]);
+
       }
     } catch (error) {
       console.error('Error adding term:', error);
