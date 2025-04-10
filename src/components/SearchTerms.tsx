@@ -13,8 +13,7 @@ export function SearchTerms({ searchQuery, setSearchQuery }: SearchTermsProps) {
         <input
           type="text"
           value={searchQuery}
-          // Intentionally causing a ReferenceError below (e -> ev)
-          onChange={(e) => setSearchQuery(ev.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-10"
           placeholder="Search your terms..."
         />
