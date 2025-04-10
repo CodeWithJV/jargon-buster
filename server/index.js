@@ -70,7 +70,7 @@ app.post('/api/terms', async (req, res) => {
     const { id, term, definition, dateAdded, initialThoughts } = req.body;
     // Server-side Error: Misspelled column name 'definiton' instead of 'definition'
     await run(
-      'INSERT INTO terms (id, term, definiton, dateAdded, initialThoughts) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO terms (id, term, definition, dateAdded, initialThoughts) VALUES (?, ?, ?, ?, ?)',
       [id, term, definition, dateAdded, initialThoughts]
     );
     res.json({ success: true });
