@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "npm run build && node server/index.js",
-    "repomix": "repomix --style markdown"
+    "repomix": "repomix --style markdown -i \"node_modules/,server/public/assets/,*lock.json,*.config.js,tsconfig*\""
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -16,6 +16,7 @@
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "repomix": "^0.3.0",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
