@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useEffect } from 'react';
 import { Check, Trash2, X, Search, BookOpen, Pencil } from 'lucide-react';
 import { useTerms } from '../context/TermContext';
 import { Term } from '../types';
@@ -9,12 +10,34 @@ interface TermListProps {
 }
 
 export function TermList({ searchQuery, filter }: TermListProps) {
-  const { terms, toggleUnderstood, deleteTerm, updateTerm } = useTerms();
+  const { terms, toggleUnderstood, deleteTerm, updateTerm, fetchTerms} = useTerms();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTerm, setEditTerm] = useState('');
   const [editDefinition, setEditDefinition] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editEli5, setEditEli5] = useState('');
+
+  const [filteredTerms, setFilteredTerms] = useState<Term[]>([]);
+  
+
+useEffect(() => {
+  const query = searchQuery.toLowerCase();
+
+  const newFiltered = terms
+    .filter(term => filter === 'understood' ? term.understood : !term.understood)
+    .filter(term => {
+      if (!query) return true;
+      return (
+        term.term.toLowerCase().includes(query) ||
+        (term.definition && term.definition.toLowerCase().includes(query)) ||
+        (term.notes && term.notes.toLowerCase().includes(query)) ||
+        (term.eli5 && term.eli5.toLowerCase().includes(query))
+      );
+    });
+
+  setFilteredTerms(newFiltered);
+}, [terms, searchQuery, filter]);
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -45,19 +68,28 @@ export function TermList({ searchQuery, filter }: TermListProps) {
     }
   };
 
-  const filteredTerms = terms
-    .filter(term => filter === 'understood' ? term.understood : !term.understood)
-    .filter(term => {
-      const query = searchQuery ? searchQuery.toLowerCase() : ''; // Handle undefined searchQuery
-      if (!query) return true; // Show all if search query is empty
-      return (
-        term.term.toLowerCase().includes(query) ||
-        (term.definition && term.definition.toLowerCase().includes(query)) ||
-        (term.notes && term.notes.toLowerCase().includes(query)) ||
-        (term.eli5 && term.eli5.toLowerCase().includes(query))
-      );
-    });
-
+  // 🧪 handle marking all terms as understood
+  const handleMarkAllAsUnderstood = async () => {
+    try {
+      const response = await fetch('/api/terms/mark-all-understood', {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'PUT',
+      });
+  
+      const result = await response.json();
+      if (result.success) {
+                await fetchTerms(); // ✅ reloads updated terms
+      } else {
+        
+      }
+    } catch (error) {
+      
+    }
+  };
+  
+  
   return (
     <div className="space-y-4">
       {filteredTerms.map((term) => {
@@ -182,6 +214,7 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
+                  {/* green thick to understood */}
                   {!term.understood && (
                     <button
                       onClick={() => toggleUnderstood(term.id)}
@@ -191,15 +224,17 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                       <Check className="h-5 w-5" />
                     </button>
                   )}
-                  {term.understood && (
-                    <button
-                      onClick={() => toggleUnderstood(term.id)}
-                      className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                      title="Mark as not understood"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
+                  {/* red thick to un understood */}
+                  {term.understood ? (
+                  <button
+                     onClick={() => toggleUnderstood(term.id)}
+                    className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                    title="Mark as not understood"
+                   >           
+                    <X className="h-5 w-5" />
+                  </button>
+                  ) : null}
+
                   <button
                     onClick={() => deleteTerm(term.id)}
                     className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
@@ -220,6 +255,17 @@ export function TermList({ searchQuery, filter }: TermListProps) {
             : 'No terms added yet. Start by adding some terms you want to learn!'}
         </div>
       )}
+      {filter === 'notUnderstood' && (
+        <div className="pt-4 text-center">
+      <button
+      onClick={handleMarkAllAsUnderstood}
+      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    >
+      Mark All as Understood
+    </button>
+  </div>
+)}
+
     </div>
   );
 }

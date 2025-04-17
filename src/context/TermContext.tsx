@@ -8,19 +8,20 @@ const TermContext = createContext<TermContextType | undefined>(undefined);
 export function TermProvider({ children }: { children: React.ReactNode }) {
   const [terms, setTerms] = useState<Term[]>([]);
 
-  useEffect(() => {
-    fetchTerms();
-  }, []);
-
   const fetchTerms = async () => {
     try {
       const response = await fetch(`${API_URL}/terms`);
-      const data = await response.json();
-      setTerms(data);
+      const data = await response.json() as Term[];
+     // 🔁 Force a *new* array with new references for React to detect changes
+       setTerms(data.map(term => ({ ...term })));
     } catch (error) {
       console.error('Error fetching terms:', error);
     }
   };
+
+  useEffect(() => {
+    fetchTerms();
+  }, []);
 
   const addTerm = async (term: string, definition: string = '', initialThoughts: string = '') => {
     const newTerm = {
@@ -114,7 +115,7 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <TermContext.Provider value={{ terms, addTerm, updateTerm, toggleUnderstood, deleteTerm }}>
+    <TermContext.Provider value={{ terms, addTerm, updateTerm, toggleUnderstood, deleteTerm, fetchTerms }}>
       {children}
     </TermContext.Provider>
   );

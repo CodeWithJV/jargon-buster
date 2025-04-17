@@ -16,4 +16,5 @@ export type TermContextType = {
   updateTerm: (id: string, term: string, definition: string, notes?: string, eli5?: string) => void;
   toggleUnderstood: (id: string) => void;
   deleteTerm: (id: string) => void;
+  fetchTerms: () => void; // ✅ Add this line
 };
