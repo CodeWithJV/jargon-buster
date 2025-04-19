@@ -182,24 +182,15 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
-                  {!term.understood && (
-                    <button
-                      onClick={() => toggleUnderstood(term.id)}
-                      className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
-                      title="Mark as understood"
-                    >
-                      <Check className="h-5 w-5" />
-                    </button>
-                  )}
-                  {term.understood && (
-                    <button
-                      onClick={() => toggleUnderstood(term.id)}
-                      className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                      title="Mark as not understood"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => toggleUnderstood(term.id)}
+                    className={`p-2 rounded-full ${
+                      term.understood ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                    }`}
+                    title={term.understood ? 'Mark as not understood' : 'Mark as understood'}
+                  >
+                    {term.understood ? <X className="h-5 w-5" /> : <Check className="h-5 w-5" />}
+                  </button>
                   <button
                     onClick={() => deleteTerm(term.id)}
                     className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
