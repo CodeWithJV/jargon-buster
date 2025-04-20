@@ -12,6 +12,7 @@ export interface Term {
 
 export type TermContextType = {
   terms: Term[];
+  loading: boolean; // Added loading state
   addTerm: (term: string, definition?: string, initialThoughts?: string) => void;
   updateTerm: (id: string, term: string, definition: string, notes?: string, eli5?: string) => void;
   toggleUnderstood: (id: string) => void;

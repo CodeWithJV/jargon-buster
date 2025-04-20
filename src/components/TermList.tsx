@@ -9,7 +9,8 @@ interface TermListProps {
 }
 
 export function TermList({ searchQuery, filter }: TermListProps) {
-  const { terms, toggleUnderstood, deleteTerm, updateTerm } = useTerms();
+  // Destructure loading state from useTerms
+  const { terms, loading, toggleUnderstood, deleteTerm, updateTerm } = useTerms();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTerm, setEditTerm] = useState('');
   const [editDefinition, setEditDefinition] = useState('');
@@ -58,8 +59,18 @@ export function TermList({ searchQuery, filter }: TermListProps) {
       );
     });
 
+  // Show loading indicator if loading is true
+  if (loading) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        Loading terms...
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {/* Render list only if not loading */}
       {filteredTerms.map((term) => {
         const { googleUrl, wikipediaUrl } = getSearchLinks(term.term);
         const isEditing = editingId === term.id;
@@ -209,6 +220,14 @@ export function TermList({ searchQuery, filter }: TermListProps) {
           {searchQuery
             ? `No terms found matching "${searchQuery}"`
             : 'No terms added yet. Start by adding some terms you want to learn!'}
+        </div>
+      )}
+      {/* Show "no terms" message only if not loading and list is empty */}
+      {!loading && filteredTerms.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          {searchQuery
+            ? `No terms found matching "${searchQuery}" in the '${filter}' list.`
+            : `No terms in the '${filter}' list yet. Add some!`}
         </div>
       )}
     </div>
