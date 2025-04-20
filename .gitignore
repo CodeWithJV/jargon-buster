@@ -30,3 +30,4 @@ server/terms.db
 # Repomix
 repomix*
 .env
+.vercel
