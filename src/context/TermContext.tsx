@@ -1,7 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Term, TermContextType } from '../types';
 
-const API_URL = '/api';
+// Get Supabase credentials from environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Check if environment variables are set
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Supabase URL and Anon Key must be provided in .env file");
+}
+
+// Initialize Supabase client
+const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 const TermContext = createContext<TermContextType | undefined>(undefined);
 
@@ -14,33 +25,42 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
 
   const fetchTerms = async () => {
     try {
-      const response = await fetch(`${API_URL}/terms`);
-      const data = await response.json();
-      setTerms(data);
+      const { data, error } = await supabase
+        .from('terms')
+        .select('*')
+        .order('dateAdded', { ascending: false }); // Order by dateAdded descending
+
+      if (error) throw error;
+      // Map Supabase data to frontend Term type if necessary (dates might need parsing)
+      setTerms(data || []); 
     } catch (error) {
       console.error('Error fetching terms:', error);
+      setTerms([]); // Set to empty array on error
     }
   };
 
   const addTerm = async (term: string, definition: string = '', initialThoughts: string = '') => {
-    const newTerm = {
-      id: crypto.randomUUID(),
-      term,
-      definition,
-      initialThoughts,
-      understood: false,
-      dateAdded: new Date().toISOString()
+    // Prepare the object for insertion, omitting fields handled by Supabase (id, dateAdded, created_at)
+    const termToInsert = { 
+      term, 
+      definition, 
+      initialThoughts, 
+      understood: false 
     };
 
     try {
-      const response = await fetch(`${API_URL}/terms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTerm)
-      });
+      // Omit id and dateAdded as they are handled by Supabase
+      const termToInsert = { term, definition, initialThoughts, understood: false };
+      const { data, error } = await supabase
+        .from('terms')
+        .insert([termToInsert])
+        .select(); // Select the newly inserted row
 
-      if (response.ok) {
-        setTerms(prev => [...prev, newTerm]);
+      if (error) throw error;
+
+      if (data) {
+        // Add the full term returned by Supabase (including id, dateAdded, created_at)
+        setTerms(prev => [...prev, data[0]]); 
       }
     } catch (error) {
       console.error('Error adding term:', error);
@@ -49,15 +69,18 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
 
   const updateTerm = async (id: string, term: string, definition: string, notes?: string, eli5?: string) => {
     try {
-      const response = await fetch(`${API_URL}/terms/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ term, definition, notes, eli5 })
-      });
+      const updates = { term, definition, notes, eli5 };
+      const { data, error } = await supabase
+        .from('terms')
+        .update(updates)
+        .eq('id', id)
+        .select(); // Select the updated row
 
-      if (response.ok) {
+      if (error) throw error;
+
+      if (data) {
         setTerms(prev => prev.map(t => 
-          t.id === id ? { ...t, term, definition, notes, eli5 } : t
+          t.id === id ? data[0] : t // Replace with the updated term from Supabase
         ));
       }
     } catch (error) {
@@ -73,26 +96,22 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
     const dateUnderstood = newUnderstood ? new Date().toISOString() : null;
 
     try {
-      const response = await fetch(`${API_URL}/terms/${id}/toggle`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          understood: newUnderstood,
-          dateUnderstood
-        })
-      });
+      const updates = { 
+        understood: newUnderstood,
+        dateUnderstood: dateUnderstood 
+      };
+      const { data, error } = await supabase
+        .from('terms')
+        .update(updates)
+        .eq('id', id)
+        .select(); // Select the updated row
 
-      if (response.ok) {
-        setTerms(prev => prev.map(term => {
-          if (term.id === id) {
-            return {
-              ...term,
-              understood: newUnderstood,
-              dateUnderstood: dateUnderstood || undefined
-            };
-          }
-          return term;
-        }));
+      if (error) throw error;
+
+      if (data) {
+         setTerms(prev => prev.map(t => 
+          t.id === id ? data[0] : t // Replace with the updated term from Supabase
+        ));
       }
     } catch (error) {
       console.error('Error toggling understood status:', error);
@@ -101,13 +120,14 @@ export function TermProvider({ children }: { children: React.ReactNode }) {
 
   const deleteTerm = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/terms/${id}`, {
-        method: 'DELETE'
-      });
+      const { error } = await supabase
+        .from('terms')
+        .delete()
+        .eq('id', id);
 
-      if (response.ok) {
-        setTerms(prev => prev.filter(term => term.id !== id));
-      }
+      if (error) throw error;
+
+      setTerms(prev => prev.filter(term => term.id !== id));
     } catch (error) {
       console.error('Error deleting term:', error);
     }
