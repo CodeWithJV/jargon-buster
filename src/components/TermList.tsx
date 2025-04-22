@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Check, Trash2, X, Search, BookOpen, Pencil } from 'lucide-react';
+import { Check, Trash2, X, Search, BookOpen, Pencil, Sparkles, Loader2 } from 'lucide-react'; // Import Loader2
 import { useTerms } from '../context/TermContext';
 import { Term } from '../types';
+import { supabase } from '../lib/supabaseClient'; // Import supabase client
 
 interface TermListProps {
   searchQuery: string;
@@ -16,6 +17,10 @@ export function TermList({ searchQuery, filter }: TermListProps) {
   const [editDefinition, setEditDefinition] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editEli5, setEditEli5] = useState('');
+  const [explainingTermId, setExplainingTermId] = useState<string | null>(null);
+  const [explanation, setExplanation] = useState<string>('');
+  const [isExplaining, setIsExplaining] = useState<boolean>(false); // Loading state for explanation
+  const [explanationError, setExplanationError] = useState<string | null>(null); // Error state
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -44,6 +49,43 @@ export function TermList({ searchQuery, filter }: TermListProps) {
       updateTerm(editingId, editTerm.trim(), editDefinition.trim(), editNotes.trim(), editEli5.trim());
       setEditingId(null);
     }
+  };
+
+  // Function to call the Supabase Edge Function
+  const handleExplainClick = async (termId: string, termText: string) => {
+    console.log(`Explain term clicked: ${termText}`);
+    setExplainingTermId(termId);
+    setIsExplaining(true);
+    setExplanation(''); // Clear previous explanation
+    setExplanationError(null); // Clear previous error
+    // Removed the line that set a stubbed explanation here
+
+    try {
+      const { data, error } = await supabase.functions.invoke('explain-term', {
+        body: { term: termText },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.explanation) {
+        setExplanation(data.explanation);
+      } else {
+        setExplanationError('Received unexpected response from the explanation service.');
+      }
+    } catch (error: any) {
+      console.error('Error calling explain-term function:', error);
+      setExplanationError(`Failed to get explanation: ${error.message || 'Unknown error'}`);
+      setExplanation(''); // Clear any partial explanation attempt
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  const closeExplanation = () => {
+    setExplainingTermId(null);
+    setExplanation('');
   };
 
   const filteredTerms = terms
@@ -152,6 +194,14 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                         >
                           <BookOpen className="h-4 w-4" />
                         </a>
+                        {/* Moved Sparkles button here */}
+                        <button
+                          onClick={() => handleExplainClick(term.id, term.term)}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50"
+                          title="Explain with AI"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                     {term.definition && (
@@ -181,11 +231,35 @@ export function TermList({ searchQuery, filter }: TermListProps) {
                         <span className="ml-4">Understood: {formatDate(term.dateUnderstood)}</span>
                       )}
                     </div>
+                    {/* Conditionally render explanation section */}
+                    {explainingTermId === term.id && (
+                      <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-md relative">
+                        {isExplaining ? (
+                          <div className="flex items-center justify-center text-purple-700">
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                            <span>Getting explanation...</span>
+                          </div>
+                        ) : explanationError ? (
+                          <p className="text-sm text-red-600">{explanationError}</p>
+                        ) : (
+                          <p className="text-sm text-purple-800">{explanation}</p>
+                        )}
+                        <button
+                          onClick={closeExplanation}
+                          className="absolute top-1 right-1 p-1 text-purple-500 hover:text-purple-700 disabled:opacity-50"
+                          disabled={isExplaining} // Disable close button while loading
+                          title="Close explanation"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
               {!isEditing && (
-                <div className="flex space-x-2 ml-4">
+                <div className="flex space-x-2 ml-4 items-center">
+                  {/* Sparkles button removed from here */}
                   <button
                     onClick={() => startEditing(term)}
                     className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
